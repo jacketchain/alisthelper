@@ -10,68 +10,90 @@ import 'package:http/http.dart' as http;
 import 'package:alisthelper/provider/settings_provider.dart';
 import 'package:alisthelper/utils/textutils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
 
-final alistProvider = StateNotifierProvider<AlistNotifier, AlistState>((ref) {
-  String workingDirectory = ref
-      .watch(settingsProvider.select((settings) => settings.workingDirectory));
-  List<String> alistArgs =
-      ref.watch(settingsProvider.select((settings) => settings.alistArgs));
-  String proxy =
-      ref.watch(settingsProvider.select((settings) => settings.proxy ?? ''));
+final alistProvider =
+    NotifierProvider<AlistNotifier, AlistState>(AlistNotifier.new);
 
-  return AlistNotifier(workingDirectory, alistArgs, proxy);
-});
-
-class AlistNotifier extends StateNotifier<AlistState> {
+class AlistNotifier extends Notifier<AlistState> {
   List<String> stdOut = [];
-  String workingDirectory;
-  List<String> alistArgs;
-  String proxy;
+  Logger logger = Logger();
 
-  AlistNotifier(this.workingDirectory, this.alistArgs, this.proxy)
-      : super(const AlistState());
+  @override
+  AlistState build() {
+    return AlistState(
+      workDir: ref.read(settingsProvider.select((s) => s.workingDirectory)),
+      alistArgs: ref.read(settingsProvider.select((s) => s.alistArgs)),
+      proxy: ref.read(settingsProvider.select((s) => s.proxy ?? '')),
+    );
+  }
+
+  Future<void> setWorkDir(String workDir) async {
+    endAlist();
+    ref.read(settingsProvider.notifier).setWorkingDirectory(workDir);
+    state = state.copyWith(workDir: workDir);
+  }
+
+  Future<void> setAlistArgs(List<String> args) async {
+    endAlist();
+    ref.read(settingsProvider.notifier).setAlistArgs(args);
+    state = state.copyWith(alistArgs: args);
+  }
+
+  Future<void> setProxy(String proxy) async {
+    ref.read(settingsProvider.notifier).setProxy(proxy);
+    state = state.copyWith(proxy: proxy);
+  }
 
   void addOutput(String text) {
-    checkState(text);
-    stdOut.add(text);
+    if (text.contains('start HTTP server')) {
+      checkState(text);
+    }
+    if (text.contains('\n') && text.contains('[')) {
+      List<String> lines = text.split('\n');
+      for (String line in lines) {
+        if (line.isNotEmpty) {
+          stdOut.add(line);
+        }
+      }
+    } else {
+      stdOut.add(text);
+    }
     state = state.copyWith(output: stdOut);
   }
 
   void checkState(String text) {
-    if (text.contains('start HTTP server')) {
-      if (text.contains('FATA')) {
-        text = text.split('FATA')[0].trim();
-      }
-      String port = text.split('@')[1].trim().split(':')[1].trim();
-      String url = 'http://localhost:$port';
-      state = state.copyWith(url: url);
-      state = state.copyWith(isRunning: true);
+    if (text.contains('FATA')) {
+      text = text.split('FATA')[0].trim();
     }
+    String port = text.split('@')[1].trim().split(':')[1].trim();
+    String url = 'http://localhost:$port';
+    state = state.copyWith(isRunning: true, url: url);
   }
 
   Future<void> startAlist() async {
     //state = state.copyWith(isRunning: true);
     final Map<String, String> envVars = Map.from(Platform.environment);
-    if (proxy != '') {
-      envVars['http_proxy'] = proxy;
-      envVars['https_proxy'] = proxy;
-      addOutput('Proxy: $proxy');
+    if (state.proxy != '') {
+      envVars['http_proxy'] = state.proxy;
+      envVars['https_proxy'] = state.proxy;
+      addOutput('Proxy: ${state.proxy}');
     }
     await changeTray(true);
     Process process;
 
     if (Platform.isWindows) {
       process = await Process.start(
-        '$workingDirectory\\alist.exe',
-        alistArgs,
-        workingDirectory: workingDirectory,
+        '${state.workDir}\\alist.exe',
+        state.alistArgs,
+        workingDirectory: state.workDir,
         environment: envVars,
       );
     } else {
       process = await Process.start(
-        '$workingDirectory/alist',
-        alistArgs,
-        workingDirectory: workingDirectory,
+        '${state.workDir}/alist',
+        state.alistArgs,
+        workingDirectory: state.workDir,
         environment: envVars,
       );
     }
@@ -114,12 +136,12 @@ class AlistNotifier extends StateNotifier<AlistState> {
     Process alistAdmin;
     if (Platform.isWindows) {
       alistAdmin = await Process.start(
-          '$workingDirectory\\alist.exe', ['admin', 'random'],
-          workingDirectory: workingDirectory);
+          '${state.workDir}\\alist.exe', ['admin', 'random'],
+          workingDirectory: state.workDir);
     } else {
       alistAdmin = await Process.start(
-          '$workingDirectory/alist', ['admin', 'random'],
-          workingDirectory: workingDirectory);
+          '${state.workDir}/alist', ['admin', 'random'],
+          workingDirectory: state.workDir);
     }
     alistAdmin.stderr.listen((data) {
       String text = TextUtils.stdDecode(data, false);
@@ -134,34 +156,39 @@ class AlistNotifier extends StateNotifier<AlistState> {
   //get alist version
   Future<void> getAlistCurrentVersion({required bool addToOutput}) async {
     Process alistVersion;
-    if (Platform.isWindows) {
-      alistVersion = await Process.start(
-          '$workingDirectory\\alist.exe', ['version'],
-          workingDirectory: workingDirectory);
-    } else {
-      alistVersion = await Process.start('$workingDirectory/alist', ['version'],
-          workingDirectory: workingDirectory);
+    try {
+      if (Platform.isWindows) {
+        alistVersion = await Process.start(
+            '${state.workDir}\\alist.exe', ['version'],
+            workingDirectory: state.workDir);
+      } else {
+        alistVersion = await Process.start(
+            '${state.workDir}/alist', ['version'],
+            workingDirectory: state.workDir);
+      }
+      alistVersion.stdout.listen((data) {
+        String text = TextUtils.stdDecode(data, false);
+        if (text.contains('Version')) {
+          String versionInfo = text
+              .split('Go Version:')[1]
+              .split('Version:')[1]
+              .trim()
+              .split('\n')[0]
+              .trim();
+          state = state.copyWith(currentVersion: versionInfo);
+        }
+        if (addToOutput) {
+          addOutput(text);
+        }
+      });
+    } on ProcessException catch (e) {
+      logger.e('Error: ${e.message}');
     }
-    alistVersion.stdout.listen((data) {
-      String text = TextUtils.stdDecode(data, false);
-      if (text.contains('Version')) {
-        String versionInfo = text
-            .split('Go Version:')[1]
-            .split('Version:')[1]
-            .trim()
-            .split('\n')[0]
-            .trim();
-        state = state.copyWith(currentVersion: versionInfo);
-      }
-      if (addToOutput) {
-        addOutput(text);
-      }
-    });
   }
 
   Future<void> fetchLatestVersion() async {
     final response = await http.get(Uri.parse(
-        'https://api.github.com/repos/alist-org/alist/releases/latest'));
+        'https://api.github.com/repos/AlistGo/alist/releases/latest'));
     final json = jsonDecode(response.body) as Map<String, dynamic>;
     try {
       String latest = json['tag_name'];
@@ -192,9 +219,9 @@ class AlistNotifier extends StateNotifier<AlistState> {
 
   Future<void> installAlist(String downloadLink) async {
     state = state.copyWith(upgradeStatus: UpgradeStatus.installing);
-    String targetArchiveFile = '$workingDirectory/alistnew.zip';
+    String targetArchiveFile = '${state.workDir}/alistnew.zip';
     await Dio().download(downloadLink, targetArchiveFile);
-    FileHelper.unzipFile(targetArchiveFile, workingDirectory);
+    FileHelper.unzipFile(targetArchiveFile, state.workDir);
     await File(targetArchiveFile).delete();
     getAlistCurrentVersion(addToOutput: false);
     state = state.copyWith(upgradeStatus: UpgradeStatus.complete);
@@ -203,11 +230,11 @@ class AlistNotifier extends StateNotifier<AlistState> {
 
   Future<void> upgradeAlist(String downloadLink) async {
     state = state.copyWith(upgradeStatus: UpgradeStatus.installing);
-    String targetArchiveFile = '$workingDirectory/alistnew.zip';
-    String backupFolder = '$workingDirectory/.old';
+    String targetArchiveFile = '${state.workDir}/alistnew.zip';
+    String backupFolder = '${state.workDir}/.old';
     String currentAlist = Platform.isWindows
-        ? '$workingDirectory/alist.exe'
-        : '$workingDirectory/alist';
+        ? '${state.workDir}/alist.exe'
+        : '${state.workDir}/alist';
     await Dio().download(downloadLink, targetArchiveFile);
     endAlist();
     if (!await Directory(backupFolder).exists()) {
@@ -219,7 +246,7 @@ class AlistNotifier extends StateNotifier<AlistState> {
     }
     await File(currentAlist)
         .rename('$backupFolder/alist-${state.currentVersion}.exe');
-    FileHelper.unzipFile('$workingDirectory/alistnew.zip', workingDirectory);
+    FileHelper.unzipFile('${state.workDir}/alistnew.zip', state.workDir);
     await File(targetArchiveFile).delete();
     getAlistCurrentVersion(addToOutput: false);
     state = state.copyWith(upgradeStatus: UpgradeStatus.complete);

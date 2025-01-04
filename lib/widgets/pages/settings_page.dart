@@ -5,6 +5,7 @@ import 'package:alisthelper/widgets/pages/about_page.dart';
 import 'package:alisthelper/widgets/pages/language_page.dart';
 import 'package:alisthelper/widgets/pages/upgrade_page.dart';
 import 'package:alisthelper/widgets/proxy_tile.dart';
+import 'package:alisthelper/widgets/rclone_account.dart';
 import 'package:alisthelper/widgets/responsive_builder.dart';
 import 'package:alisthelper/widgets/theme_tile.dart';
 import 'package:alisthelper/widgets/toggle_tile.dart';
@@ -40,14 +41,14 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
   @override
   void initState() {
     super.initState();
-    //final settings = ref.read(settingsProvider);
+    //final settings = ref.watch(settingsProvider);
   }
 
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    final settingsNotifier = ref.watch(settingsProvider.notifier);
-    final t = Translations.of(context);
+    final settingsNotifier = ref.read(settingsProvider.notifier);
+
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 800),
@@ -60,10 +61,8 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                     title: Text(t.settings.interfaceSettings.title,
                         style: const TextStyle(
                             fontWeight: FontWeight.w600, fontSize: 18))),
-                ChangeThemeModeTile(
-                    settings: settings, settingsNotifier: settingsNotifier),
-                ChangeThemeColorTile(
-                    settings: settings, settingsNotifier: settingsNotifier),
+                ChangeThemeModeTile(),
+                ChangeThemeColorTile(),
                 ListTile(
                   title: Text(t.settings.interfaceSettings.language),
                   leading: Icon(
@@ -105,7 +104,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                 CustomToggleTile(
                   value: settings.autoStart,
                   onToggled: (value) =>
-                      ref.read(settingsProvider.notifier).setAutoStart(value),
+                      ref.watch(settingsProvider.notifier).setAutoStart(value),
                   title: t.settings.alistHelperSettings.autoStart.title,
                   subtitle:
                       t.settings.alistHelperSettings.autoStart.description,
@@ -136,12 +135,9 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                   title: t.settings.alistSettings.autoStartAlist.title,
                   subtitle: t.settings.alistSettings.autoStartAlist.description,
                 ),
-                WorkingDirectoryTile(
-                    settings: settings, settingsNotifier: settingsNotifier),
-                ProxyTile(
-                    settings: settings, settingsNotifier: settingsNotifier),
-                AlistArgsTile(
-                    settings: settings, settingsNotifier: settingsNotifier),
+                WorkingDirectoryTile(),
+                ProxyTile(),
+                AlistArgsTile(),
                 Container(height: 10)
               ]),
             ),
@@ -157,19 +153,20 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                   onToggled: (value) =>
                       settingsNotifier.setAutoStartRclone(value),
                   title: t.settings.rcloneSettings.autoStartAlist.title,
-                  subtitle: t.settings.rcloneSettings.autoStartAlist.description,
+                  subtitle:
+                      t.settings.rcloneSettings.autoStartAlist.description,
                 ),
                 CustomToggleTile(
                   value: settings.startAfterAlist,
                   onToggled: (value) =>
                       settingsNotifier.setStartAfterAlist(value),
                   title: t.settings.rcloneSettings.startAfterAlist.title,
-                  subtitle: t.settings.rcloneSettings.startAfterAlist.description,
+                  subtitle:
+                      t.settings.rcloneSettings.startAfterAlist.description,
                 ),
-                RcloneDirectoryTile(
-                    settings: settings, settingsNotifier: settingsNotifier),
-                RcloneArgsTile(
-                    settings: settings, settingsNotifier: settingsNotifier),
+                RcloneDirectoryTile(),
+                RcloneArgsTile(),
+                RcloneMountAccountTile(),
                 Container(height: 10)
               ]),
             ),

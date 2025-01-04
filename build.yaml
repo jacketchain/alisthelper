@@ -5,7 +5,7 @@ targets:
       slang_build_runner:
         options:
           base_locale: en
-          # fallback_strategy: base_locale
+          fallback_strategy: base_locale
         generate_for:
           - lib/i18n/*.json
       json_serializable:
@@ -14,7 +14,6 @@ targets:
       freezed|freezed:
         generate_for:
           - lib/model/*.dart
-
       riverpod_annotation:
         generate_for:
           - lib/provider/*.dart

@@ -4,21 +4,37 @@
         "startAlist": "Start",
         "endAlist": "End",
         "openGUI": "Open Web GUI",
-        "genRandomPwd": "Gen Random Pwd",
+        "genRandomPwd": "Reset Pwd",
         "getVersion": "Version Info"
     },
     "rcloneOperation": {
         "startRclone": "Start",
         "endRclone": "End",
         "getRcloneInfo": "Version Info",
-        "help": "Q&A: \nQ1: Where should Rclone be placed? \nA1: For now, please put it in the same directory as the alist executable file. \nQ2: How to use Rclone? \nA2: 1. First run the WEB GUI to add storage. Enter rclone rcd --rc-web-gui in the Rclone parameter setting to start. \n 2. Then modify the parameters to rclone mount remote: /path/to/mountpoint. Some network disks need to set parameters, please search by yourself \nQ3: How to use other functions of Rclone? \nA3: Please refer to Rclone official documentation or search in the community."
+        "viewLogs": "View Log",
+        "noVdisks": "No vdisks set in config file.",
+        "deleteVdisk": "Are you sure you want to delete ${name}? this action is irreversible!",
+        "createVdisk": {
+            "title": "Create Remote Disk",
+            "description": "Create a remote disk, if you don't understand the options here, please seek help.",
+            "name": "Name",
+            "nameHint": "Name of the disk",
+            "path": "Path", 
+            "pathHint": "Path after the dav/ ",
+            "mountPoint": "Mount Point",
+            "mountPointHint": "Mount point of the disk on your system",
+            "extraFlags": "Extra Flags",
+            "extraFlagsHint": "Extra flags for rclone mount",
+            "enableAutoMount": "Enable Auto Mount",
+            "enableAutoMountHint": "Auto mount this disk after rclone starts"
+        }
     },
     "firstLaunch": {
         "intro": "Welcome to use Alist Helper, let's get started!",
         "about": "Click here to learn more about Alist Helper!",
         "chooseTheme": "First, let's choose your preferred theme here!",
         "chooseDirectory": "Second, you have to get an alist and tell the Alist Helper where it is!",
-        "autoInstall": "AlistHelper now supports automatic installation of alist, try it out!",
+        "autoInstall": "AlistHelper now supports automatic installation of ${name}, try it out!",
         "getAlist": "Want to use a specific version of alist or install it manually? Click here!",
         "finish": "Finish! You can change these settings in settings!"
     },
@@ -29,7 +45,8 @@
     },
     "home": {
         "options": "Options",
-        "logs": "Logs"
+        "logs": "Logs",
+        "manage": "Manage"
     },
     "languageSettings": {
         "language": "Language",
@@ -43,12 +60,16 @@
         "select": "Select",
         "edit": "Edit",
         "save": "Save",
-        "upgrade": "Upgrade"
+        "upgrade": "Upgrade",
+        "add": "Add",
+        "docs": "Docs",
+        "sponsor": "Sponsor"
     },
     "tray": {
         "open": "Open",
         "hide": "Hide",
         "quit": "Quit",
+        "openGUI":"Open Web GUI",
         "startAlist": "Start Alist",
         "endAlist": "End Alist",
         "tooltip": "Alist Helper",
@@ -106,7 +127,7 @@
             "argumentsList": {
                 "title": "Arguments List",
                 "description": "Edit startup arguments for alist",
-                "descriptionForRclone": "Edit startup arguments for rclone. You can also paste a full line, Alist Helper will help you parse it.",
+                "descriptionForRclone": "Edit startup arguments for rclone. If you don't understand the options here, please seek help.",
                 "editArguments": "Edit Arguments",
                 "addArgument": "Add Argument",
                 "removeAll": "Remove all",
@@ -122,7 +143,8 @@
         },
         "rcloneSettings": {
             "title": "Rclone Options",
-            "rcloneDirNotSet": "The rclone directory is not set. Please set the rclone directory and startup parameters in the settings.",
+            "rcloneDirNotSet": "You can mount your web drives on your computer using rclone. However, the Rclone Directory has not been set yet. Please go to the settings and configure the Rclone Directory to proceed.",
+            "rcloneWebdavNotSet": "You can mount your web drives on your computer using rclone. However, the WebDav account for accessing alist has not been set yet. Please go to the settings and configure the WebDav account to proceed.",
             "autoStartAlist": {
                 "title": "Allow rclone auto start",
                 "description": "This will auto start rclone when Alist Helper starts."
@@ -130,6 +152,12 @@
             "startAfterAlist": {
                 "title": "Requires to start after alist starts",
                 "description": "This will require rclone to start after alist starts."
+            },
+            "account": {
+                "title": "WebDav Account",
+                "description": "Set WebDav account",
+                "name": "Account Name",
+                "pass": "Password"
             }
         },
         "others": {
@@ -155,6 +183,11 @@
             "title": "Alist Helper Version",
             "currentVersion": "Current Alist Helper Version",
             "latestVersion": "Latest Alist Helper Version"
+        },
+        "rcloneVersion": {
+            "title": "Rclone Version",
+            "currentVersion": "Current Rclone Version",
+            "latestVersion": "Latest Rclone Version"
         }
     }
 }

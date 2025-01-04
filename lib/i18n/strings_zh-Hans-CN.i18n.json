@@ -11,14 +11,30 @@
         "startRclone": "启动",
         "endRclone": "关闭",
         "getRcloneInfo": "版本信息",
-        "help": "Q&A: \nQ1: Rclone 应该放在哪里？ \nA1: 目前请将其与alist可执行文件放在同一目录下。 \nQ2: 如何使用Rclone？ \nA2: 1. 首先运行一次WEB GUI添加存储，在Rclone参数设定中输入rclone rcd --rc-web-gui可以启动。\n 2. 之后修改参数为rclone mount remote: /path/to/mountpoint 部分网盘需要设置参数，请自行搜索 \nQ3: 如何使用Rclone的其他功能？ \nA3: 请参考Rclone官方文档或在社区中搜索。"
+        "viewLogs": "查看日志",
+        "noVdisks": "未设置远程磁盘。",
+        "deleteVdisk": "您确定要删除 ${name} 吗？此操作不可逆！",
+        "createVdisk": {
+            "title": "创建远程磁盘",
+            "description": "创建一个远程磁盘，如果您不理解这里的选项，请寻求帮助。",
+            "name": "名称",
+            "nameHint": "磁盘的名称",
+            "path": "路径", 
+            "pathHint": "dav/ 后的路径",
+            "mountPoint": "挂载点",
+            "mountPointHint": "系统中磁盘的挂载点",
+            "extraFlags": "额外参数",
+            "extraFlagsHint": "rclone 挂载的额外参数",
+            "enableAutoMount": "启用自动挂载",
+            "enableAutoMountHint": "rclone 启动后自动挂载此磁盘"
+        }
     },
     "firstLaunch": {
         "intro": "欢迎使用 Alist Helper,让我们开始吧!",
         "about": "点击此处了解更多关于 Alist Helper 的信息!",
         "chooseTheme": "首先,让我们在这里选择您喜欢的主题!",
         "chooseDirectory": "第二步,您需要安装 alist 并告诉 Alist Helper 它在哪里。",
-        "autoInstall": "Alist Helper现已支持自动安装 alist,点击这里安装。",
+        "autoInstall": "Alist Helper现已支持自动安装 ${name},点击这里安装。",
         "getAlist": "想要使用特定版本的alist或是手动安装?点击这里了解。",
         "finish": "完成!您可以在设置中更改这些设置!"
     },
@@ -29,7 +45,8 @@
     },
     "home": {
         "options": "选项",
-        "logs": "日志"
+        "logs": "日志",
+        "manage": "管理"
     },
     "languageSettings": {
         "language": "语言",
@@ -43,12 +60,16 @@
         "select": "选择",
         "edit": "编辑",
         "save": "保存",
-        "upgrade": "升级"
+        "upgrade": "升级",
+        "add": "添加",
+        "docs": "文档",
+        "sponsor": "赞助"
     },
     "tray": {
         "open": "打开",
         "hide": "隐藏",
         "quit": "退出",
+        "openGUI": "打开 Web GUI",
         "startAlist": "启动 Alist 服务",
         "endAlist": "关闭 Alist 服务",
         "tooltip": "Alist Helper",
@@ -106,7 +127,7 @@
             "argumentsList": {
                 "title": "启动参数列表",
                 "description": "编辑 alist 的启动参数",
-                "descriptionForRclone": "编辑 rclone 的启动参数。你也可以粘贴整行，Alist Helper 会帮你解析。",
+                "descriptionForRclone": "编辑 rclone 的启动参数。如果你不明白这里的选项，请寻求帮助",
                 "editArguments": "编辑参数",
                 "addArgument": "添加参数",
                 "removeAll": "移除所有参数",
@@ -122,7 +143,8 @@
         },
         "rcloneSettings": {
             "title": "Rclone 选项",
-            "rcloneDirNotSet": "Rclone 目录未设置，请在设置中设置 rclone 目录以及启动参数。",
+            "rcloneDirNotSet": "您可以使用 rclone 将您的网络驱动器挂载到计算机上。但是，尚未设置 Rclone 目录。请转到设置并配置 Rclone 目录以继续。",
+            "rcloneWebdavNotSet": "您可以使用 rclone 将您的网络驱动器挂载到计算机上。但是，尚未设置用于访问 alist 的 WebDav 帐户。请转到设置并配置 WebDav 帐户以继续。",
             "autoStartAlist": {
                 "title": "允许 rclone 自动启动",
                 "description": "这将在 Alist Helper 启动时自动启动 rclone。"
@@ -130,6 +152,12 @@
             "startAfterAlist": {
                 "title": "要求在 alist 启动后启动",
                 "description": "这将要求 rclone 在 alist 启动后启动。"
+            },
+            "account": {
+                "title": "WebDav 帐户",
+                "description": "设置 WebDav 帐户",
+                "name": "帐户名",
+                "pass": "密码"
             }
         },
         "others": {
@@ -155,6 +183,11 @@
             "title": "Alist Helper 版本",
             "currentVersion": "当前 Alist Helper 版本",
             "latestVersion": "最新 Alist Helper 版本"
+        },
+        "rcloneVersion": {
+            "title": "Rclone 版本",
+            "currentVersion": "当前 Rclone 版本",
+            "latestVersion": "最新 Rclone 版本"
         }
     }
 }

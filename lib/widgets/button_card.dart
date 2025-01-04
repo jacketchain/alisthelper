@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:alisthelper/i18n/strings.g.dart';
 import 'package:alisthelper/provider/alist_provider.dart';
 import 'package:alisthelper/provider/rclone_provider.dart';
+import 'package:alisthelper/widgets/pages/logs_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -13,8 +14,7 @@ class AlistMultiButtonCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final alistState = ref.watch(alistProvider);
-    final alistNotifier = ref.read(alistProvider.notifier);
-    final t = Translations.of(context);
+    final alistNotifier = ref.watch(alistProvider.notifier);
 
     Future<void> openGUI() async {
       final Uri url = Uri.parse(alistState.url);
@@ -37,23 +37,23 @@ class AlistMultiButtonCard extends ConsumerWidget {
               runSpacing: 10.0,
               spacing: 10.0,
               children: [
-                ElevatedButton(
+                FilledButton.tonal(
                     onPressed: alistState.isRunning
                         ? null
                         : () => alistNotifier.startAlist(),
                     child: Text(t.alistOperation.startAlist)),
-                ElevatedButton(
+                FilledButton.tonal(
                     onPressed: alistState.isRunning
                         ? () => alistNotifier.endAlist()
                         : null,
                     child: Text(t.alistOperation.endAlist)),
-                ElevatedButton(
+                FilledButton.tonal(
                     onPressed: alistState.isRunning ? openGUI : null,
                     child: Text(t.alistOperation.openGUI)),
-                ElevatedButton(
+                FilledButton.tonal(
                     onPressed: () => alistNotifier.genRandomPwd(),
                     child: Text(t.alistOperation.genRandomPwd)),
-                ElevatedButton(
+                FilledButton.tonal(
                     onPressed: () =>
                         alistNotifier.getAlistCurrentVersion(addToOutput: true),
                     child: Text(t.alistOperation.getVersion)),
@@ -73,8 +73,11 @@ class RcloneMultiButtonCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rcloneState = ref.watch(rcloneProvider);
-    final rcloneNotifier = ref.read(rcloneProvider.notifier);
-    final t = Translations.of(context);
+    final rcloneNotifier = ref.watch(rcloneProvider.notifier);
+
+    // Assuming rcloneState.output is a list of strings
+    final unreadCount = rcloneState.output.length;
+
     return Card(
       margin: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       child: Column(
@@ -89,19 +92,34 @@ class RcloneMultiButtonCard extends ConsumerWidget {
               runSpacing: 10.0,
               spacing: 10.0,
               children: [
-                ElevatedButton(
+                FilledButton.tonal(
                     onPressed: rcloneState.isRunning
                         ? null
                         : () => rcloneNotifier.startRclone(),
                     child: Text(t.rcloneOperation.startRclone)),
-                ElevatedButton(
+                FilledButton.tonal(
                     onPressed: rcloneState.isRunning
                         ? () => rcloneNotifier.endRclone()
                         : null,
                     child: Text(t.rcloneOperation.endRclone)),
-                ElevatedButton(
+                FilledButton.tonal(
                     onPressed: () => rcloneNotifier.getRcloneInfo(),
                     child: Text(t.rcloneOperation.getRcloneInfo)),
+                Badge(
+                  isLabelVisible: unreadCount > 0,
+                  label: Text(unreadCount.toString()),
+                  child: FilledButton.tonal(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => Dialog.fullscreen(
+                          child: RcloneLogsPage(),
+                        ),
+                      );
+                    },
+                    child: Text(t.rcloneOperation.viewLogs),
+                  ),
+                ),
               ],
             ),
           ),

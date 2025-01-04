@@ -2,34 +2,30 @@ import 'dart:io';
 
 import 'package:alisthelper/i18n/strings.g.dart';
 import 'package:alisthelper/model/settings_state.dart';
+import 'package:alisthelper/provider/alist_provider.dart';
 import 'package:alisthelper/provider/settings_provider.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class WorkingDirectoryTile extends StatelessWidget {
-  const WorkingDirectoryTile({
-    super.key,
-    required this.settings,
-    required this.settingsNotifier,
-  });
+class WorkingDirectoryTile extends ConsumerWidget {
+  const WorkingDirectoryTile({super.key});
 
-  final SettingsState settings;
-  final SettingsNotifier settingsNotifier;
-
-  Future<void> openDirectory() async {
-    final Uri url = Uri.parse('file:${settings.workingDirectory}');
+  Future<void> openDirectory(String dir) async {
+    final Uri url = Uri.parse('file:$dir');
     if (!await launchUrl(url)) {
       throw Exception('Could not launch the $url');
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final alistNotifier = ref.read(alistProvider.notifier);
     final TextEditingController workingDirectoryController =
         TextEditingController(text: settings.workingDirectory);
-    final t = Translations.of(context);
+
     return ListTile(
       contentPadding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
       title: Text(
@@ -37,7 +33,7 @@ class WorkingDirectoryTile extends StatelessWidget {
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
       subtitle: Text(settings.workingDirectory),
-      trailing: ElevatedButton(
+      trailing: FilledButton.tonal(
         onPressed: () async {
           final String? path = await showDialog<String>(
             context: context, // use the new context variable here
@@ -45,22 +41,15 @@ class WorkingDirectoryTile extends StatelessWidget {
               // use the new context variable here
               return AlertDialog(
                 title: Text(t.settings.alistSettings.workingDirectory.title),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(t.settings.alistSettings.workingDirectory.hint),
-                    TextField(
-                      controller: workingDirectoryController,
-                      decoration: InputDecoration(
-                        labelText: t.settings.alistSettings.workingDirectory
-                            .description,
-                      ),
-                    ),
-                    Container(
-                      height: 20,
-                    ),
-                    ElevatedButton(
+                content: TextField(
+                  controller: workingDirectoryController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText:
+                        t.settings.alistSettings.workingDirectory.description,
+                    helperText: t.settings.alistSettings.workingDirectory.hint,
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.folder_open_rounded),
                       onPressed: () async {
                         final String? selectedDirectory =
                             await getDirectoryPath();
@@ -68,17 +57,17 @@ class WorkingDirectoryTile extends StatelessWidget {
                           workingDirectoryController.text = selectedDirectory;
                         }
                       },
-                      child: Text(
-                          t.settings.alistSettings.workingDirectory.chooseFrom),
+                      tooltip:
+                          t.settings.alistSettings.workingDirectory.chooseFrom,
                     ),
-                  ],
+                  ),
                 ),
                 actions: <Widget>[
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(t.button.cancel),
                   ),
-                  ElevatedButton(
+                  FilledButton.tonal(
                     onPressed: () async {
                       final directory =
                           Directory(workingDirectoryController.text);
@@ -94,8 +83,9 @@ class WorkingDirectoryTile extends StatelessWidget {
                                 .pop(workingDirectoryController.text);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(t.settings.alistSettings
-                                    .workingDirectory.found(exec: programName)),
+                                content: Text(t
+                                    .settings.alistSettings.workingDirectory
+                                    .found(exec: programName)),
                               ),
                             );
                           }
@@ -105,8 +95,9 @@ class WorkingDirectoryTile extends StatelessWidget {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(t.settings.alistSettings
-                                    .workingDirectory.notFound(exec: programName)),
+                                content: Text(t
+                                    .settings.alistSettings.workingDirectory
+                                    .notFound(exec: programName)),
                               ),
                             );
                           }
@@ -128,32 +119,23 @@ class WorkingDirectoryTile extends StatelessWidget {
             },
           );
           if (path != null) {
-            await settingsNotifier.setWorkingDirectory(path);
+            await alistNotifier.setWorkDir(path);
           }
         },
         child: Text(t.button.select),
       ),
       onLongPress: () {
-        openDirectory();
+        openDirectory(settings.workingDirectory);
       },
     );
   }
 }
 
-
-
 class RcloneDirectoryTile extends ConsumerWidget {
-  const RcloneDirectoryTile({
-    super.key,
-    required this.settings,
-    required this.settingsNotifier,
-  });
+  const RcloneDirectoryTile({super.key});
 
-  final SettingsState settings;
-  final SettingsNotifier settingsNotifier;
-
-  Future<void> openDirectory() async {
-    final Uri url = Uri.parse('file:${settings.rcloneDirectory}');
+  Future<void> openDirectory(String dir) async {
+    final Uri url = Uri.parse('file:$dir');
     if (!await launchUrl(url)) {
       throw Exception('Could not launch the $url');
     }
@@ -161,9 +143,12 @@ class RcloneDirectoryTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
+    final SettingsState settings = ref.watch(settingsProvider);
+    final SettingsNotifier settingsNotifier =
+        ref.read(settingsProvider.notifier);
     final TextEditingController rcloneDirectoryController =
         TextEditingController(text: settings.rcloneDirectory);
-    final t = Translations.of(context);
+
     return ListTile(
       contentPadding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
       title: Text(
@@ -171,7 +156,7 @@ class RcloneDirectoryTile extends ConsumerWidget {
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
       subtitle: Text(settings.rcloneDirectory),
-      trailing: ElevatedButton(
+      trailing: FilledButton.tonal(
         onPressed: () async {
           final String? path = await showDialog<String>(
             context: context, // use the new context variable here
@@ -179,31 +164,32 @@ class RcloneDirectoryTile extends ConsumerWidget {
               // use the new context variable here
               return AlertDialog(
                 title: Text(t.settings.alistSettings.workingDirectory.title),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
+                content: Wrap(
                   children: [
-                    Text(t.settings.alistSettings.workingDirectory.hint),
+                    //Text(t.settings.alistSettings.workingDirectory.hint),
                     TextField(
                       controller: rcloneDirectoryController,
                       decoration: InputDecoration(
+                        border: OutlineInputBorder(),
                         labelText: t.settings.alistSettings.workingDirectory
                             .description,
+                        hintText: 'home/user/rclone',
+                        helperText:
+                            t.settings.alistSettings.workingDirectory.hint,
+                        suffixIcon: IconButton(
+                          icon: Icon(Icons.folder_open_rounded),
+                          onPressed: () async {
+                            final String? selectedDirectory =
+                                await getDirectoryPath();
+                            if (selectedDirectory != null) {
+                              rcloneDirectoryController.text =
+                                  selectedDirectory;
+                            }
+                          },
+                          tooltip: t.settings.alistSettings.workingDirectory
+                              .chooseFrom,
+                        ),
                       ),
-                    ),
-                    Container(
-                      height: 20,
-                    ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final String? selectedDirectory =
-                            await getDirectoryPath();
-                        if (selectedDirectory != null) {
-                          rcloneDirectoryController.text = selectedDirectory;
-                        }
-                      },
-                      child: Text(
-                          t.settings.alistSettings.workingDirectory.chooseFrom),
                     ),
                   ],
                 ),
@@ -212,7 +198,7 @@ class RcloneDirectoryTile extends ConsumerWidget {
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(t.button.cancel),
                   ),
-                  ElevatedButton(
+                  FilledButton.tonal(
                     onPressed: () async {
                       final directory =
                           Directory(rcloneDirectoryController.text);
@@ -228,8 +214,9 @@ class RcloneDirectoryTile extends ConsumerWidget {
                                 .pop(rcloneDirectoryController.text);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(t.settings.alistSettings
-                                    .workingDirectory.found(exec: programName)),
+                                content: Text(t
+                                    .settings.alistSettings.workingDirectory
+                                    .found(exec: programName)),
                               ),
                             );
                           }
@@ -239,8 +226,9 @@ class RcloneDirectoryTile extends ConsumerWidget {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(t.settings.alistSettings
-                                    .workingDirectory.notFound(exec: programName)),
+                                content: Text(t
+                                    .settings.alistSettings.workingDirectory
+                                    .notFound(exec: programName)),
                               ),
                             );
                           }
@@ -268,7 +256,7 @@ class RcloneDirectoryTile extends ConsumerWidget {
         child: Text(t.button.select),
       ),
       onLongPress: () {
-        openDirectory();
+        openDirectory(settings.rcloneDirectory);
       },
     );
   }

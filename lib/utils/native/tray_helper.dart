@@ -3,6 +3,7 @@ import 'package:alisthelper/i18n/strings.g.dart';
 import 'package:alisthelper/provider/alist_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tray_manager/tray_manager.dart' as tm;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
 enum TrayEntry {
@@ -11,6 +12,7 @@ enum TrayEntry {
   hide,
   endAlist,
   startAlist,
+  openGUI,
 }
 
 Future<void> initTray() async {
@@ -40,14 +42,22 @@ Future<void> changeTray(bool isRunning) async {
     //add endAlist
     items.insert(
         1, tm.MenuItem(key: TrayEntry.endAlist.name, label: t.tray.endAlist));
+    items.insert(
+        2, tm.MenuItem(key: TrayEntry.openGUI.name, label: t.tray.openGUI));
     tm.trayManager.setContextMenu(tm.Menu(items: items));
-    await tm.trayManager.setToolTip(t.tray.workingTooltip);
+    //setToolTip() method is not available on linux,just cancel it！
+    if (!Platform.isLinux) {
+      await tm.trayManager.setToolTip(t.tray.tooltip);
+    }
   } else {
     //add startAlist
-    items.insert(
-        1, tm.MenuItem(key: TrayEntry.startAlist.name, label: t.tray.startAlist));
+    items.insert(1,
+        tm.MenuItem(key: TrayEntry.startAlist.name, label: t.tray.startAlist));
     tm.trayManager.setContextMenu(tm.Menu(items: items));
-    await tm.trayManager.setToolTip(t.tray.tooltip);
+    //setToolTip() method is not available on linux,just cancel it！
+    if (!Platform.isLinux) {
+      await tm.trayManager.setToolTip(t.tray.tooltip);
+    }
   }
 }
 
@@ -71,11 +81,19 @@ Future<void> showFromTray() async {
 }
 
 Future<void> startAlist(WidgetRef ref) async {
-  final alistNotifier = ref.read(alistProvider.notifier);
+  final alistNotifier = ref.watch(alistProvider.notifier);
   alistNotifier.startAlist();
 }
 
 Future<void> endAlist(WidgetRef ref) async {
-  final alistNotifier = ref.read(alistProvider.notifier);
+  final alistNotifier = ref.watch(alistProvider.notifier);
   alistNotifier.endAlist();
+}
+
+Future<void> openGUI(WidgetRef ref) async {
+  final alistState = ref.watch(alistProvider);
+  final Uri url = Uri.parse(alistState.url);
+  if (!await launchUrl(url)) {
+    throw Exception('Could not launch the $url');
+  }
 }

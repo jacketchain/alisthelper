@@ -1,22 +1,19 @@
 import 'package:alisthelper/i18n/strings.g.dart';
 import 'package:alisthelper/model/settings_state.dart';
+import 'package:alisthelper/provider/alist_provider.dart';
+import 'package:alisthelper/provider/rclone_provider.dart';
 import 'package:alisthelper/provider/settings_provider.dart';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AlistArgsTile extends StatelessWidget {
-  const AlistArgsTile({
-    super.key,
-    required this.settings,
-    required this.settingsNotifier,
-  });
-
-  final SettingsState settings;
-  final SettingsNotifier settingsNotifier;
+class AlistArgsTile extends ConsumerWidget {
+  const AlistArgsTile({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final t = Translations.of(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final alistNotifier = ref.read(alistProvider.notifier);
+
     return ListTile(
       contentPadding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
       title: Text(
@@ -24,7 +21,7 @@ class AlistArgsTile extends StatelessWidget {
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
       subtitle: Text(settings.alistArgs.join(', ')),
-      trailing: ElevatedButton(
+      trailing: FilledButton.tonal(
         onPressed: () async {
           final args = await showDialog<List<String>>(
             context: context,
@@ -36,7 +33,8 @@ class AlistArgsTile extends StatelessWidget {
             if (args.isEmpty) {
               args.add('');
             }
-            settingsNotifier.setAlistArgs(args);
+            alistNotifier.endAlist();
+            alistNotifier.setAlistArgs(args);
           }
         },
         child: Text(t.button.edit),
@@ -116,7 +114,7 @@ class __AlistArgsDialogState extends State<_AlistArgsDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(t.button.cancel),
         ),
-        ElevatedButton(
+        FilledButton.tonal(
           onPressed: () => Navigator.of(context).pop(args),
           child: Text(t.button.save),
         ),
@@ -125,19 +123,15 @@ class __AlistArgsDialogState extends State<_AlistArgsDialog> {
   }
 }
 
-class RcloneArgsTile extends StatelessWidget {
-  const RcloneArgsTile({
-    super.key,
-    required this.settings,
-    required this.settingsNotifier,
-  });
-
-  final SettingsState settings;
-  final SettingsNotifier settingsNotifier;
+class RcloneArgsTile extends ConsumerWidget {
+  const RcloneArgsTile({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final t = Translations.of(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final SettingsState settings = ref.watch(settingsProvider);
+    final SettingsNotifier settingsNotifier =
+        ref.read(settingsProvider.notifier);
+    final rcloneNotifier = ref.read(rcloneProvider.notifier);
     return ListTile(
       contentPadding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
       title: Text(
@@ -145,7 +139,7 @@ class RcloneArgsTile extends StatelessWidget {
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
       subtitle: Text(settings.rcloneArgs.join(', ')),
-      trailing: ElevatedButton(
+      trailing: FilledButton.tonal(
         onPressed: () async {
           final args = await showDialog<List<String>>(
             context: context,
@@ -157,6 +151,7 @@ class RcloneArgsTile extends StatelessWidget {
             if (args.isEmpty) {
               args.add('');
             }
+            rcloneNotifier.endRclone();
             settingsNotifier.setRcloneArgs(args);
           }
         },
@@ -246,7 +241,7 @@ class __RcloneArgsDialogState extends State<_RcloneArgsDialog> {
           },
           child: Text(t.settings.alistSettings.argumentsList.removeAll),
         ),
-        ElevatedButton(
+        FilledButton.tonal(
           onPressed: () {
             if (args.length == 1 && args[0].contains(' ')) {
               args = args[0].split(' ');

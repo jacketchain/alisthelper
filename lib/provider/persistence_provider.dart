@@ -10,7 +10,7 @@ final persistenceProvider = Provider<PersistenceService>((ref) {
 });
 
 // Version of the storage
-const currentAlistHelperVersion = 'v0.1.5';
+const currentAlistHelperVersion = 'v0.2.0';
 const _version = 'ah_current_version';
 
 // App Window Offset and Size info
@@ -36,6 +36,8 @@ const _rcloneArgs = 'ah_rclone_args';
 const _isFirstRun = 'ah_is_first_run';
 const _autoStartRclone = 'ah_enable_rclone';
 const _startAfterAlist = 'ah_start_after_alist';
+const _webdavAccount = 'ah_webdav_account';
+const _vdisks = 'ah_vdisks';
 
 /// This service abstracts the persistence layer.
 class PersistenceService {
@@ -59,6 +61,22 @@ class PersistenceService {
       await prefs.setString(_version, currentAlistHelperVersion);
     }
     return PersistenceService._(prefs);
+  }
+
+  Future<void> setVdisks(List<String> value) async {
+    await _prefs.setStringList(_vdisks, value);
+  }
+
+  List<String> getVdisks() {
+    return _prefs.getStringList(_vdisks) ?? [];
+  }
+
+  Future<void> setWebdavAccount(String? value) async {
+    await _prefs.setString(_webdavAccount, value ?? '');
+  }
+
+  String getWebdavAccount() {
+    return _prefs.getString(_webdavAccount) ?? '';
   }
 
   //startAfterAlist
@@ -98,18 +116,33 @@ class PersistenceService {
     await _prefs.setDouble(_windowWidth, width);
   }
 
-  WindowDimensions getWindowLastDimensions() {
+  WindowDimensions? getWindowLastDimensions() {
     Size? size;
     Offset? position;
     final offsetX = _prefs.getDouble(_windowOffsetX);
     final offsetY = _prefs.getDouble(_windowOffsetY);
     final width = _prefs.getDouble(_windowWidth);
     final height = _prefs.getDouble(_windowHeight);
-    if (width != null && height != null) size = Size(width, height);
-    if (offsetX != null && offsetY != null) position = Offset(offsetX, offsetY);
 
-    final dimensions = {"size": size, "position": position};
-    return dimensions;
+    if (width != null && height != null) {
+      size = Size(width, height);
+    }
+
+    if (offsetX != null && offsetY != null) {
+      if (offsetX < -2048 || offsetY < -2048) {
+        position = const Offset(0, 0);
+      }
+      position = Offset(offsetX, offsetY);
+    }
+
+    if (size == null || position == null) {
+      return null;
+    }
+
+    return WindowDimensions(
+      position: position,
+      size: size,
+    );
   }
 
   Future<void> setSaveWindowPlacement(bool savePlacement) async {
@@ -157,7 +190,15 @@ class PersistenceService {
   }
 
   List<String> getRcloneArgs() {
-    return _prefs.getStringList(_rcloneArgs) ?? ['rcd','--rc-web-gui'];
+    return _prefs.getStringList(_rcloneArgs) ??
+        [
+          'rcd',
+          '--rc-user',
+          'admin',
+          '--rc-pass',
+          'admin',
+          '--rc-web-gui-no-open-browser'
+        ];
   }
 
   Future<void> setAutoStartRclone(bool value) async {

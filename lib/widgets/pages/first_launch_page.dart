@@ -2,9 +2,12 @@ import 'dart:io';
 
 import 'package:alisthelper/i18n/strings.g.dart';
 import 'package:alisthelper/model/alist_state.dart';
+import 'package:alisthelper/model/updater_state.dart' as rclone;
 import 'package:alisthelper/provider/alist_provider.dart';
 import 'package:alisthelper/provider/settings_provider.dart';
-import 'package:alisthelper/widgets/choose_package.dart';
+import 'package:alisthelper/provider/updater_provider.dart';
+import 'package:alisthelper/widgets/choose_alist_package.dart';
+import 'package:alisthelper/widgets/choose_rclone_package.dart';
 import 'package:alisthelper/widgets/pages/about_page.dart';
 import 'package:alisthelper/widgets/pages/language_page.dart';
 import 'package:alisthelper/widgets/responsive_builder.dart';
@@ -13,6 +16,7 @@ import 'package:alisthelper/widgets/theme_tile.dart';
 import 'package:alisthelper/widgets/working_directory_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -44,9 +48,10 @@ class _FirstLaunchBodyState extends ConsumerState<FirstLaunchBody> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    final settingsNotifier = ref.watch(settingsProvider.notifier);
+    final settingsNotifier = ref.read(settingsProvider.notifier);
     final alistState = ref.watch(alistProvider);
-    final t = Translations.of(context);
+    final updaterState = ref.watch(updaterProvider);
+
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 800),
@@ -80,10 +85,8 @@ class _FirstLaunchBodyState extends ConsumerState<FirstLaunchBody> {
                     title: Text(t.firstLaunch.chooseTheme,
                         style: const TextStyle(
                             fontWeight: FontWeight.w600, fontSize: 18))),
-                ChangeThemeModeTile(
-                    settings: settings, settingsNotifier: settingsNotifier),
-                ChangeThemeColorTile(
-                    settings: settings, settingsNotifier: settingsNotifier),
+                ChangeThemeModeTile(),
+                ChangeThemeColorTile(),
                 ListTile(
                   title: Text(t.settings.interfaceSettings.language),
                   leading:
@@ -106,7 +109,7 @@ class _FirstLaunchBodyState extends ConsumerState<FirstLaunchBody> {
                 Platform.isWindows
                     ? ListTile(
                         leading: const Icon(Icons.info_outline),
-                        title: Text(t.firstLaunch.autoInstall),
+                        title: Text(t.firstLaunch.autoInstall(name: 'Alist')),
                         trailing:
                             alistState.upgradeStatus == UpgradeStatus.installing
                                 ? const CircularProgressIndicator()
@@ -121,7 +124,41 @@ class _FirstLaunchBodyState extends ConsumerState<FirstLaunchBody> {
                               showDialog(
                                   context: context,
                                   builder: (context) {
-                                    return const ChoosePackage(
+                                    return const ChooseAlistPackage(
+                                        isUpgrade: false);
+                                  });
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString())));
+                            }
+                          }
+                        },
+                      )
+                    : Container(),
+                Platform.isWindows
+                    ? ListTile(
+                        leading: const Icon(Icons.info_outline),
+                        title: Text(t.firstLaunch.autoInstall(name: 'Rclone')),
+                        trailing: updaterState.upgradeStatus ==
+                                rclone.UpgradeStatus.installing
+                            ? const CircularProgressIndicator()
+                            : const Icon(Icons.arrow_forward_ios_rounded),
+                        onTap: () async {
+                          try {
+                            Directory dir =
+                                await getApplicationSupportDirectory();
+                            await settingsNotifier
+                                .setRcloneDirectory('${dir.path}\\bin');
+
+                            Logger().d(
+                                'Rclone directory: ${settings.rcloneDirectory}');
+                            if (context.mounted) {
+                              showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return const ChooseRclonePackage(
                                         isUpgrade: false);
                                   });
                             }
@@ -145,8 +182,7 @@ class _FirstLaunchBodyState extends ConsumerState<FirstLaunchBody> {
                         mode: LaunchMode.externalApplication);
                   },
                 ),
-                WorkingDirectoryTile(
-                    settings: settings, settingsNotifier: settingsNotifier),
+                WorkingDirectoryTile(),
               ]),
             ),
             Center(

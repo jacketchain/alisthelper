@@ -30,15 +30,14 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final alistNotifier = ref.read(alistProvider.notifier);
-    Color color =
-        ref.watch(settingsProvider.select((settings) => settings.themeColor));
-    final rcloneNotifier = ref.read(rcloneProvider.notifier);
+    final settings = ref.watch(settingsProvider);
+    final alistNotifier = ref.watch(alistProvider.notifier);
+    final rcloneNotifier = ref.watch(rcloneProvider.notifier);
     return TrayWatcher(
       child: WindowWatcher(
         onClose: () async {
           try {
-            if (ref.read(settingsProvider).minimizeToTray) {
+            if (ref.watch(settingsProvider).minimizeToTray) {
               await hideToTray();
             } else {
               await alistNotifier.endAlist();
@@ -54,10 +53,9 @@ class MyApp extends ConsumerWidget {
           locale: TranslationProvider.of(context).flutterLocale,
           supportedLocales: AppLocaleUtils.supportedLocales,
           localizationsDelegates: GlobalMaterialLocalizations.delegates,
-          themeMode: ref
-              .watch(settingsProvider.select((settings) => settings.themeMode)),
-          theme: AlistHelperTheme(color).lightThemeData,
-          darkTheme: AlistHelperTheme(color).darkThemeData,
+          themeMode: settings.themeMode,
+          theme: AlistHelperTheme(settings.themeColor).lightThemeData,
+          darkTheme: AlistHelperTheme(settings.themeColor).darkThemeData,
           home: const Home(),
         ),
       ),

@@ -18,7 +18,7 @@ class TextUtils {
     return input;
   }
 
-  static String stdDecode(List<int> input,bool isGBK) {
+  static String stdDecode(List<int> input, bool isGBK) {
     if (isGBK) {
       return removeEscapeSequences(gbk.decode(removeExtraBreaks(input)));
     }
@@ -58,5 +58,43 @@ class TextUtils {
 
     // Convert each component to an integer and return the list of numbers
     return versionComponents.map((component) => int.parse(component)).toList();
+  }
+
+  static List<String> accountParser(String text) {
+    return utf8.decode(base64.decode(text)).split('\n');
+  }
+
+  static String accountEncoder(List<String> account) {
+    // then base64 encode the account
+    return base64.encode(utf8.encode(account.join('\n')));
+  }
+
+  static List<String> flagsParser(String text) {
+    List<String> result = [];
+    if (text.contains('"')) {
+      text.replaceAll('"', '');
+    }
+    RegExp exp = RegExp(r'--\S+ \S+');
+    Iterable<Match> matches = exp.allMatches(text);
+    for (Match match in matches) {
+      result.add(match.group(0)!);
+    }
+    return result;
+  }
+
+  static String encodeCredentials(List<String> args) {
+    String user = '';
+    String pass = '';
+
+    for (int i = 0; i < args.length; i++) {
+      if (args[i] == '--rc-user' && i + 1 < args.length) {
+        user = args[i + 1];
+      } else if (args[i] == '--rc-pass' && i + 1 < args.length) {
+        pass = args[i + 1];
+      }
+    }
+
+    String credentials = '$user:$pass';
+    return base64.encode(utf8.encode(credentials));
   }
 }

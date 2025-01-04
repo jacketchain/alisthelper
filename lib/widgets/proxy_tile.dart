@@ -1,24 +1,20 @@
 import 'package:alisthelper/i18n/strings.g.dart';
-import 'package:alisthelper/model/settings_state.dart';
+import 'package:alisthelper/provider/alist_provider.dart';
 import 'package:alisthelper/provider/settings_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ProxyTile extends StatelessWidget {
-  const ProxyTile({
-    super.key,
-    required this.settings,
-    required this.settingsNotifier,
-  });
-
-  final SettingsState settings;
-  final SettingsNotifier settingsNotifier;
+class ProxyTile extends ConsumerWidget {
+  const ProxyTile({super.key});
 
   @override
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final alistNotifier = ref.read(alistProvider.notifier);
     final TextEditingController proxyController =
         TextEditingController(text: settings.proxy);
-    final t = Translations.of(context);
+
     return ListTile(
       contentPadding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
       title: Text(
@@ -28,7 +24,7 @@ class ProxyTile extends StatelessWidget {
       subtitle: Text((settings.proxy.toString() != '')
           ? settings.proxy.toString()
           : t.settings.alistSettings.proxy.hint),
-      trailing: ElevatedButton(
+      trailing: FilledButton.tonal(
         onPressed: () async {
           final String? proxy = await showDialog<String>(
             context: context, // use the new context variable here
@@ -40,14 +36,13 @@ class ProxyTile extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Text(t.settings.alistSettings.proxy.hint),
                     TextField(
                       controller: proxyController,
-                      decoration: const InputDecoration(
-                          labelText: "http://yourproxy:port"),
-                    ),
-                    Container(
-                      height: 20,
+                      decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: t.settings.alistSettings.proxy.title,
+                          hintText: "http://yourproxy:port",
+                          helperText: t.settings.alistSettings.proxy.hint),
                     ),
                   ],
                 ),
@@ -56,7 +51,7 @@ class ProxyTile extends StatelessWidget {
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(t.button.cancel),
                   ),
-                  ElevatedButton(
+                  FilledButton.tonal(
                     onPressed: () async {
                       final proxy = proxyController.text;
                       Navigator.of(context).pop(proxy);
@@ -71,7 +66,7 @@ class ProxyTile extends StatelessWidget {
             //check url is vaild for http://yourproxy:port
             try {
               if (Uri.parse(proxy).isAbsolute || proxy == '') {
-                await settingsNotifier.setProxy(proxy);
+                await alistNotifier.setProxy(proxy);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

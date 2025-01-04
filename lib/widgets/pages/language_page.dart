@@ -8,9 +8,7 @@ class LanguagePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final t = Translations.of(context);
-
-    final activeLocale = ref.watch(settingsProvider.select((s) => s.locale));
+    final activeLocale = ref.watch(settingsProvider).locale;
 
     return Scaffold(
       appBar: AppBar(
@@ -25,7 +23,9 @@ class LanguagePage extends ConsumerWidget {
               ...[null, ...AppLocale.values].map((locale) {
                 return ListTile(
                   onTap: () async {
-                    await ref.read(settingsProvider.notifier).setLocale(locale);
+                    await ref
+                        .watch(settingsProvider.notifier)
+                        .setLocale(locale);
                     if (locale == null) {
                       LocaleSettings.useDeviceLocale();
                     } else {
